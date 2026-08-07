@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tennis_model_log>
+<entry>
+    <date>7/13/2026</date>
+    <description>
+        Began working with Claude on defining my features, only using basic derivatives right now.
+        Working with just the 2023 season to establish a process then will move onto tuning. Need to do a review of the game logic once more.
+        Want to also test naively with these basic stats (possibly simulating a betting approach with half/quarter Kelly). Outputs like percentages and 
+        odds seems to be good to go.
+    </description>
+    <key_observations>
+        <ul>
+
+            <li>
+            Favorites are extremely overexagerrated because simulation is relying on essentially a difference between two numbers
+            </li>
+            <li>
+            Lots of rows with nan, will need to remove or lok into logic of filling
+            </li>
+            <li>
+            Players with little matches, or hot seasons will be favored over players they would never be favored over in the market's eyes
+            </li>
+
+        </ul>
+    
+    </key_observations>
+</entry>
+
+</tennis_model_log>
