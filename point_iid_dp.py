@@ -267,21 +267,122 @@ def get_stats(match: pd.Series) -> list:
     ]
 
 
+# --------------------------------------------------------------------------
+# Markets: every one of these is an exact tail sum over the joint
+# --------------------------------------------------------------------------
+def p_match(joint, best_of=3):
+    to_win = best_of // 2 + 1
+    return sum(v for (sa, _, _, _, _), v in joint.items() if sa == to_win)
+
+
+def total_games_dist(joint):
+    d = defaultdict(float)
+    for (_, _, ca, cb, _), v in joint.items():
+        d[ca + cb] += v
+    return dict(d)
+
+
+def games_spread_dist(joint):
+    d = defaultdict(float)
+    for (_, _, ca, cb, _), v in joint.items():
+        d[ca - cb] += v
+    return dict(d)
+
+
+def set_betting_dist(joint):
+    d = defaultdict(float)
+    for (sa, sb, _, _, _), v in joint.items():
+        d[(sa, sb)] += v
+    return dict(d)
+
+
+def tiebreak_count_dist(joint):
+    d = defaultdict(float)
+    for (_, _, _, _, ntb), v in joint.items():
+        d[ntb] += v
+    return dict(d)
+
+
+def p_over(dist, line):
+    """P(X > line) for a half-point line."""
+    return sum(v for k, v in dist.items() if k > line)
+
+
+def calc_odds(p, format="euro"):
+    if format == "euro":
+        return round(1 / p, 2)
+    if format == "american":
+        if p <= 0 or p >= 1:
+            return float("inf") if p <= 0 else float("-inf")
+        return round((1 - p) * 100 / p) if p < 0.5 else round(-p * 100 / (1 - p))
+
+
+def expected(dist):
+    return sum(k * v for k, v in dist.items())
+
+
+# --------------------------------------------------------------------------
+# Posterior integration: the reason the DP exists
+# --------------------------------------------------------------------------
+def posterior_predictive(draws, best_of=3, rules="tb7", final_rules=None):
+    """
+    Average the joint over posterior draws [(pA, pB), ...] instead of plugging in
+    point estimates. E[f(p)] != f(E[p]) and the gap is largest exactly on the
+    derivative markets.
+    """
+    out = defaultdict(float)
+    w = 1.0 / len(draws)
+    for pA, pB in draws:
+        for k, v in match_dist_coin_toss(
+            pA, pB, best_of=best_of, rules=rules, final_rules=final_rules
+        ).items():
+            out[k] += w * v
+    return dict(out)
+
+
 if __name__ == "__main__":
     match_features = pd.read_csv("./features/match_features.csv")
     majors = match_features[match_features["tourney_level"] == "G"]
     ta = tour_avg_return(majors)
 
-    example = majors.sample(2).iloc[0]
-    players = get_stats(example)
+    examples = majors.sample(5)
 
-    pA_serve = serve_win_prob(players[0], players[1], ta)
-    pB_serve = serve_win_prob(players[1], players[0], ta)
+    for i in range(len(examples)):
+        example = examples.iloc[i]
 
-    print(
-        f"P(point win on serve): {players[0][5]} = {pA_serve:.3f}, {players[1][5]} = {pB_serve:.3f}\n"
-    )
+        players = get_stats(example)
 
-    print(
-        match_dist_coin_toss(pA=pA_serve, pB=pB_serve, best_of=int(example["best_of"]))
-    )
+        pA_serve = serve_win_prob(players[0], players[1], ta)
+        pB_serve = serve_win_prob(players[1], players[0], ta)
+
+        print(f"{example["tourney_name"]} - {str(example["tourney_date"])[:4]}")
+
+        print(
+            f"P(point win on serve): {players[0][5]} = {pA_serve:.3f}, {players[1][5]} = {pB_serve:.3f}"
+        )
+
+        # --- price the match off the exact DP joint ---
+        name_a, name_b = players[0][5], players[1][5]
+        best_of = int(example["best_of"])
+
+        joint = match_dist_coin_toss(
+            pA_serve,
+            pB_serve,
+            best_of=best_of,
+            rules="tb7",  # set per tournament; see note below
+        )
+
+        p_a = p_match(joint, best_of)
+        games_d = total_games_dist(joint)
+        spread_d = games_spread_dist(joint)
+        sets_d = set_betting_dist(joint)
+        tb_d = tiebreak_count_dist(joint)
+
+        print(
+            f"{name_a}: {p_a:.3f} ({calc_odds(p_a)}) | "
+            f"{name_b}: {1-p_a:.3f} ({calc_odds(1-p_a)})"
+        )
+        print(
+            f"E[games] = {expected(games_d):.2f}, "
+            f"P(>=1 TB) = {p_over(tb_d, 0.5):.3f}\n"
+        )

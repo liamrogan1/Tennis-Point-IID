@@ -25,5 +25,24 @@
     
     </key_observations>
 </entry>
+<entry>
+    <date>8/7/2026</date>
+    <description>
+        Opted to switch to a combinatorics style independent indentically distributed form of simulation instead of monte carlo.
+        Now my program simulates a matchup and all the probabilities of reaching game states in around 4 seconds.
+        Wrote down handwritten notes, and have been able to understand most of the logic. Need to try to understand how outputs are generated from these 
+        massive dictionaries.
+    </description>
+    <key_observations>
+        <ul>
+
+            <li>
+            Assuming each point is iid is not necessarily correct but it allows the ability to draw prices on derivaitve markets instead of just ML.
+            </li>
+
+        </ul>
+    
+    </key_observations>
+</entry>
 
 </tennis_model_log>
