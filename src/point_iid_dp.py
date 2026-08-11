@@ -1,6 +1,7 @@
 # Final set rule configurations
 from collections import defaultdict
 from functools import lru_cache
+from pathlib import Path
 
 import pandas as pd
 
@@ -341,7 +342,9 @@ def posterior_predictive(draws, best_of=3, rules="tb7", final_rules=None):
 
 
 if __name__ == "__main__":
-    match_features = pd.read_csv("./features/match_features.csv")
+    BASE = Path(__file__).resolve().parent.parent  # the Tennis/ folder
+    csv_path = BASE / "features" / "match_features.csv"
+    match_features = pd.read_csv(csv_path)
     majors = match_features[match_features["tourney_level"] == "G"]
     ta = tour_avg_return(majors)
 

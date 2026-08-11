@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 import random
 
 import numpy as np
@@ -257,9 +258,11 @@ def get_stats(match: pd.Series) -> list:
 
 
 if __name__ == "__main__":
+    BASE = Path(__file__).resolve().parent.parent  # the Tennis/ folder
+    csv_path = BASE / "features" / "match_features.csv"
     # [%1st serve in, %1st serve pts won, %2nd serve pts won,
     #  %1st serve RETURN pts won, %2nd serve RETURN pts won, name]
-    match_features = pd.read_csv("./features/match_features.csv")
+    match_features = pd.read_csv(csv_path)
 
     majors = match_features[match_features["tourney_level"] == "G"]
     mismatches = match_features[
