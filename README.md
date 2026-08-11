@@ -3,6 +3,12 @@
 Point-by-point and match-level simulation of tennis outcomes,
 with feature engineering from historical match data.
 
+Uses Barnett and Clarke's point probability equation and simulates each point 
+using these probabilities and tracks distributions of points, games, sets, and matches.
+
+Currently uses strictly observed stats of players across their careers, will look
+to implement a model to predict a player's "skill level".
+
 ## Scripts
 - `point_iid_dp.py` — dynamic-programming point model (IID assumption)
 - `point_iid_monte_carlo.py` — Monte Carlo simulation of the same
